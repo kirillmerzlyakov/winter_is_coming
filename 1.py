@@ -25,6 +25,7 @@ def main():
 
     write_table(TABLE, sys.argv[2], ROW, COLUMN, COL_WIDTH)
     write_grammar_type('W', sys.argv[2])
+    # print(is_cycle())
 
 
 def reader():
@@ -127,17 +128,21 @@ def find_less():
         for x in first:
             set_relation(e[0], x, '<')
     set_relation(BOLT_START, 'S', '<')    
-    find_less_for_bolt('S')
+    find_less_for_bolt('S', set('S'))
 
 
-def find_less_for_bolt(s):
+def find_less_for_bolt(s, used):
     for e in RULES:
         l = e[0]
         r = e[1][0]
         if l == s:
             set_relation(BOLT_START, r, '<')
             if isNeterm(r):
-                find_less_for_bolt(r)
+                print(used)
+                if r in used:
+                    return
+                used.add(r)
+                find_less_for_bolt(r, used)
 
 
 def find_greather():
@@ -157,17 +162,20 @@ def find_greather():
             for r in right:
                 set_relation(l, r, '>')
     set_relation('S', BOLT_END, '>')
-    find_greather_for_bolt('S')
+    find_greather_for_bolt('S', set('S'))
     
 
-def find_greather_for_bolt(s):
-   for e in RULES:
+def find_greather_for_bolt(s, used):
+    for e in RULES:
         l = e[0]
         r = e[1][-1]
         if l == s:
             set_relation(r, BOLT_END, '>')
             if isNeterm(r):
-                find_greather_for_bolt(r)
+                if r in used:
+                    return
+                used.add(r)
+                find_greather_for_bolt(r, used)
 
 
 def isNeterm(s):
@@ -189,6 +197,79 @@ def one_relation():
         max_rel = max(max_rel, COL_WIDTH[e])
     return max_rel == 1
 
+def is_cycle():
+    cur_not_terminal = 'S'
+    stack = [cur_not_terminal]
+    used = {cur_not_terminal}
+    is_cycle = False
+
+    while stack and is_cycle == False:
+        cur = stack.pop()
+        rules = [rule[1] for rule in filter(
+            lambda pair:pair[0] == cur_not_terminal 
+            and len(pair[1]) == 1 
+            and isNeterm(pair[1]), RULES)
+            ]
+        for not_term in rules:
+            if not_term not in used:
+                used.add(not_term)
+                stack.append(not_term)
+            else:
+                is_cycle = True
+                break
+    return is_cycle
+
+def has_cell_all_relations():
+    for x in TABLE:
+        for y in TABLE[x]:
+            if len(TABLE[x][y]) == 3:
+                return True 
+    return False
+
+
+def does_weak_condition_performed(left_nt, right_nt):
+    substr_after_left_nt = set()
+    for rule in RULES:
+        if left_nt in rule[1]:
+            substr_after_left_nt.add(rule[1][rule[1].find(left_nt):])
+    right_nt_rules = [rule[1] for rule in filter(lambda pair: pair[0] == right_nt, RULES)]
+    if substr_after_left_nt.intersection(right_nt_rules):
+        return False
+    return True
+
+
+def is_simple_precedence():
+    return not is_cycle() and isReversible() and one_relation()
+
+
+def is_weak_precedence():
+    if is_cycle():
+        return False
+    if not isReversible():
+        return False
+    if has_cell_all_relations():
+        return False
+    
+    relation_le_with_rigth_not_term = []
+    for x in TABLE:
+        for y in TABLE[x]:
+            if '<' in TABLE[x][y] and '=' in TABLE[x][y] and isNeterm(y):
+                relation_le_with_rigth_not_term.append((x, y))
+    
+    is_weak = True
+
+    for pair in relation_le_with_rigth_not_term:
+        is_weak = is_weak and does_weak_condition_performed(*pair)
+    return is_weak
+    
+
+def get_type_of_grammer():
+    if is_simple_precedence():
+        return 'S'
+    if is_weak_precedence():
+        return 'W'
+    return 'N'
+
 
 def print_const():
     calculate_column_width()  
@@ -203,6 +284,7 @@ def print_const():
     print('ONERELATIONS: ', one_relation())
     print()
     print_table()
+    print(get_type_of_grammer())
 
 
 if __name__ == '__main__':
