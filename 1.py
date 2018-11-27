@@ -1,4 +1,5 @@
 import sys
+from writer import *
 
 TERM = []
 NETERM = []
@@ -22,6 +23,9 @@ def main():
     find_greather()
     print_const() 
 
+    write_table(TABLE, sys.argv[2], ROW, COLUMN, COL_WIDTH)
+    write_grammar_type('W', sys.argv[2])
+
 
 def reader():
     global TERM, NETERM, WORDS, RULES
@@ -41,11 +45,6 @@ def reader():
             if len(arr) == 1:
                 WORDS.append(arr[0])
     NETERM.sort()
-
-
-def writer(s):
-    with open(sys.argv[2], 'wb') as f:
-        f.write(s.encode())
 
 
 def create_dict():
