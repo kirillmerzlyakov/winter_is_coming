@@ -13,6 +13,7 @@ OPERATIONS = {'empty': '*', 'greather': '>', 'less': '<', 'equal': '='}
 TABLE = {}
 COL_WIDTH = {}
 RULES = []
+AKSIOMA = ''
 
 
 def main():
@@ -29,29 +30,30 @@ def main():
 
 
 def reader():
-    global TERM, NETERM, WORDS, RULES
+    global TERM, NETERM, WORDS, RULES, AKSIOMA
     with open(sys.argv[1], 'rb') as f:
         for line in f:
             s = line.decode()
             arr = s.split()
             if len(arr) > 1:
                 term = arr[0]
-                if not(term in TERM):
-                    TERM.append(term)
+                if not(term in NETERM):
+                    NETERM.append(term)
                 rule = arr[1]
                 for e in rule:
-                    if e.islower() and not(e in NETERM):
-                        NETERM.append(e)
+                    if e.islower() and not(e in TERM):
+                        TERM.append(e)
                 RULES.append((term, rule))
             if len(arr) == 1:
                 WORDS.append(arr[0])
-    NETERM.sort()
+    AKSIOMA = NETERM[0]
+    TERM.sort()
 
 
 def create_dict():
     global TERM, NETERM, ROW, TABLE, COLUMN, COL_WIDTH
-    ROW = TERM + NETERM + [BOLT_START]
-    COLUMN = TERM + NETERM + [BOLT_END]
+    ROW = NETERM + TERM + [BOLT_START]
+    COLUMN = NETERM + TERM + [BOLT_END]
     for e in COLUMN:
         COL_WIDTH[e] = 1
     for x in ROW:
@@ -114,7 +116,7 @@ def set_relation(x, y, rel):
     if TABLE[x][y] == DOT: 
         TABLE[x][y] = rel
     else:
-        TABLE[x][y] += rel
+        TABLE[x][y] = rel + TABLE[x][y]
 
 
 def find_less():
@@ -127,8 +129,8 @@ def find_less():
         first = get_first(e[1])
         for x in first:
             set_relation(e[0], x, '<')
-    set_relation(BOLT_START, 'S', '<')    
-    find_less_for_bolt('S', set('S'))
+    set_relation(BOLT_START, AKSIOMA, '<')    
+    find_less_for_bolt(AKSIOMA, set(AKSIOMA))
 
 
 def find_less_for_bolt(s, used):
@@ -149,7 +151,7 @@ def find_greather():
     eq_rules = []
     for x in ROW:
         for y in COLUMN:
-            if '=' in TABLE[x][y] and (isNeterm(x) or isNeterm(x) and isNeterm(y)):
+            if '=' in TABLE[x][y] and isNeterm(x):
                 eq_rules.append((x, y))
     for e in eq_rules:
         left = get_last(e[0])
@@ -161,8 +163,8 @@ def find_greather():
         for l in left:
             for r in right:
                 set_relation(l, r, '>')
-    set_relation('S', BOLT_END, '>')
-    find_greather_for_bolt('S', set('S'))
+    set_relation(AKSIOMA, BOLT_END, '>')
+    find_greather_for_bolt(AKSIOMA, set(AKSIOMA))
     
 
 def find_greather_for_bolt(s, used):
@@ -282,6 +284,7 @@ def print_const():
     print('COL_WIDTH: ', COL_WIDTH)
     print('REVERSIBLE: ', isReversible())
     print('ONERELATIONS: ', one_relation())
+    print('AKSIOMA: ', AKSIOMA)
     print()
     print_table()
     print(get_type_of_grammer())
