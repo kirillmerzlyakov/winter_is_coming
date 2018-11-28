@@ -1,7 +1,4 @@
-S aASb
-S d
-A Ac
-A c
+E Ea
+E x
 
-ssad
-dsad
+x

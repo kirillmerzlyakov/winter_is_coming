@@ -18,6 +18,7 @@ AKSIOMA = ''
 
 def main():
     reader()
+    print(TERM)
     create_dict()
     find_eaqual()
     find_less()
@@ -26,7 +27,13 @@ def main():
 
     write_table(TABLE, sys.argv[2], ROW, COLUMN, COL_WIDTH)
     write_grammar_type('W', sys.argv[2])
-    # print(is_cycle())
+
+
+    if (get_type_of_grammer() != 'N'):
+	    for word in WORDS:
+	    	# bottom_up_analyze(word)
+	    	_print_history(bottom_up_analyze(word))
+	    	print()
 
 
 def reader():
@@ -271,6 +278,69 @@ def get_type_of_grammer():
     if is_weak_precedence():
         return 'W'
     return 'N'
+
+
+def _get_base_boundary(form):
+	i = 0
+	l = 0
+	left_boundaries = []
+	while i < len(form) - 1 and l == 0:
+		if TABLE[form[i]][form[i + 1]] == '.':
+			return None
+		if '<' in TABLE[form[i]][form[i + 1]]:
+			left_boundaries.append(i + 1)
+		if '>' in TABLE[form[i]][form[i + 1]]:
+			l = i
+		i += 1
+	return list(zip(left_boundaries, [l] * len(left_boundaries)))
+
+
+def _find_rule(form):
+	for rule in RULES:
+		if rule[1] == form:
+			return rule
+
+def _print_history(history):
+	for event in history:
+		print(event)
+
+
+def bottom_up_analyze(input_str):
+	history = []
+	stop_condition = '^' + AKSIOMA + '$'
+	form = '^' + input_str + '$'
+	stack = '^'
+	reader_pointer = 1
+	history.append('{} {}'.format(stack, form[reader_pointer:]))
+	form = stack + form[reader_pointer:]
+
+	while form != stop_condition:
+		possible_boundaries = _get_base_boundary(form)
+		if possible_boundaries is None:
+			history.append('error')
+			return history
+		for boundary in possible_boundaries:
+			rule = _find_rule(form[boundary[0]:boundary[1] + 1])
+			cur_boundary = boundary
+			if rule is not None:
+				break
+		if rule is None:
+			history.append('error')
+			return history
+		
+		while reader_pointer <= cur_boundary[1]:
+			stack += form[reader_pointer]
+			reader_pointer += 1
+			history.append('{} {}'.format(stack, form[reader_pointer:]))
+		
+		stack = stack.replace(stack[cur_boundary[0]:], rule[0])
+
+		history.append('{} {}'.format(stack, form[reader_pointer:]))
+		form = stack + form[reader_pointer:]
+		reader_pointer = len(stack)
+
+	history.append(form)
+	return  history
 
 
 def print_const():
