@@ -17,23 +17,21 @@ AKSIOMA = ''
 
 
 def main():
-    reader()
-    print(TERM)
-    create_dict()
-    find_eaqual()
-    find_less()
-    find_greather()
-    print_const() 
+	reader()
+	print(TERM)
+	create_dict()
+	find_eaqual()
+	find_less()
+	find_greather()
+	print_const() 
 
-    write_table(TABLE, sys.argv[2], ROW, COLUMN, COL_WIDTH)
-    write_grammar_type('W', sys.argv[2])
+	write_table(TABLE, sys.argv[2], ROW, COLUMN, COL_WIDTH)
+	write_grammar_type('W', sys.argv[2])
 
-
-    if (get_type_of_grammer() != 'N'):
-	    for word in WORDS:
-	    	# bottom_up_analyze(word)
-	    	_print_history(bottom_up_analyze(word))
-	    	print()
+	if (get_type_of_grammer() != 'N'):
+		for word in WORDS:
+			_print_history(bottom_up_analyze(word))
+			print()
 
 
 def reader():
@@ -118,12 +116,13 @@ def get_last(s):
 
 
 def set_relation(x, y, rel):
-    if rel in TABLE[x][y]:
-        return
-    if TABLE[x][y] == DOT: 
-        TABLE[x][y] = rel
-    else:
-        TABLE[x][y] = rel + TABLE[x][y]
+	global TABLE
+	if rel in TABLE[x][y]:
+		return
+	if TABLE[x][y] == DOT: 
+		TABLE[x][y] = rel
+	else:
+		TABLE[x][y] = rel + TABLE[x][y]
 
 
 def find_less():
@@ -137,21 +136,21 @@ def find_less():
         for x in first:
             set_relation(e[0], x, '<')
     set_relation(BOLT_START, AKSIOMA, '<')    
-    find_less_for_bolt(AKSIOMA, set(AKSIOMA))
+    find_less_for_bolt(AKSIOMA, set())
 
 
 def find_less_for_bolt(s, used):
-    for e in RULES:
-        l = e[0]
-        r = e[1][0]
-        if l == s:
-            set_relation(BOLT_START, r, '<')
-            if isNeterm(r):
-                print(used)
-                if r in used:
-                    return
-                used.add(r)
-                find_less_for_bolt(r, used)
+	for e in RULES:
+		l = e[0]
+		r = e[1][0]
+		if l == s:
+			set_relation(BOLT_START, r, '<')
+			if isNeterm(r):
+				if r in used:
+					return
+				used.add(r)
+				find_less_for_bolt(r, used)
+	print(TABLE)
 
 
 def find_greather():
@@ -171,7 +170,7 @@ def find_greather():
             for r in right:
                 set_relation(l, r, '>')
     set_relation(AKSIOMA, BOLT_END, '>')
-    find_greather_for_bolt(AKSIOMA, set(AKSIOMA))
+    find_greather_for_bolt(AKSIOMA, set())
     
 
 def find_greather_for_bolt(s, used):
@@ -207,7 +206,7 @@ def one_relation():
     return max_rel == 1
 
 def is_cycle():
-    cur_not_terminal = 'S'
+    cur_not_terminal = AKSIOMA
     stack = [cur_not_terminal]
     used = {cur_not_terminal}
     is_cycle = False
@@ -215,10 +214,11 @@ def is_cycle():
     while stack and is_cycle == False:
         cur = stack.pop()
         rules = [rule[1] for rule in filter(
-            lambda pair:pair[0] == cur_not_terminal 
+            lambda pair:pair[0] == cur 
             and len(pair[1]) == 1 
             and isNeterm(pair[1]), RULES)
             ]
+
         for not_term in rules:
             if not_term not in used:
                 used.add(not_term)
